@@ -71,8 +71,6 @@ for log in logs:
   except:
     print('read error %s' % log)
 data=json.dumps(winner)
-print data
-data=data+'prute'
 url= posturl+'&crc='+hashlib.sha256(data+hashpass).hexdigest()
 headers = { 'User-Agent' : UserAgent  }
 #try:
