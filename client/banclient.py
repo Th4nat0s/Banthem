@@ -1,7 +1,8 @@
 #!/usr/bin/python
 import re
-import urllib
+import urllib2
 import json
+import hashlib
 
 # Fill your API KEY
 api_key = '1234567890987654321'
@@ -22,10 +23,12 @@ logs = [ './sample/users.log',
 ##### START ######
 commonregex = '^.*"[\S]{1,} (.*) [\S\.\/]{1,}".*".*".*".*"$'
 dateregex = '^.*\[(.*)\]'
-posturl = 'http://banthem.trollprod.org/report.php?id=' + api_key
+posturl = 'http://banthem.trollprod.org/report/?id=' + api_key
+UserAgent = 'BanThem/0.0'
 
-def scan4uri(request):
-  pass
+hashpass = password
+for i in range (0,512):
+  hashpass = hashlib.sha256(hashpass).hexdigest()
 
 winner = []
 for log in logs:
@@ -67,8 +70,25 @@ for log in logs:
   except:
     print('read error %s' % log)
 data=json.dumps(winner)
-print winner
-"""subreg=re.search(dateregex,line);
-urllib.urlopen(posturl,data)
-winner=[]
-"""
+url= posturl+'&crc='+hashlib.sha256(data+hashpass).hexdigest()
+headers = { 'User-Agent' : UserAgent  }
+#try:
+try: 
+  req = urllib2.Request(url, data, headers)
+  response = urllib2.urlopen(req)
+  the_page = response.read()
+  
+except urllib2.HTTPError as e:
+  if (e.code==401):
+    print e.code
+    print 'Bad password or api key'
+  elif (e.code==404):
+    print e.code
+    print 'url not found'
+  else:
+    print e.code
+    print 'Unexpectd Error'
+
+
+
+
