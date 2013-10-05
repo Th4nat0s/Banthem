@@ -3,9 +3,10 @@ import re
 import urllib2
 import json
 import hashlib
+import urllib
 
 # Fill your API KEY
-api_key = '1234567890987654321'
+api_key = 'ddf002e00f3176987fcdc47af55b1a2c3f8229dc3bbb83233bb4a4ad0acf06ff'
 
 # Fill your Password
 password = 'password'
@@ -13,7 +14,7 @@ password = 'password'
 # Fill some regex to exclude false positives
 excludes = ['^http://badbastogne\.be',
             '^http://www\.badbastogne\.be',
-            '^http://[\S\d]{1,}\.trollprod\.(org|com)' ]
+            '^http://[\S\d]{1,}\.trollprod\.' ]
 
 # Fill your HTTP Logs file
 logs = [ './sample/users.log',
@@ -26,7 +27,7 @@ dateregex = '^.*\[(.*)\]'
 posturl = 'http://banthem.trollprod.org/report/?id=' + api_key
 UserAgent = 'BanThem/0.0'
 
-hashpass = password
+hashpass = password + api_key
 for i in range (0,512):
   hashpass = hashlib.sha256(hashpass).hexdigest()
 
@@ -38,12 +39,12 @@ for log in logs:
       candidatef = False
       # Scan for http://
       try:
-        subreg=re.search(commonregex,urllib.unquote_plus(line));
+        subreg=re.search(commonregex,line);
         #//phpsubreg = re.search('<\?php', urllib.unquote_plus(subreg.group(1)))
-        httpsubreg = re.search('(ftp|http)://(.*)$', subreg.group(1))
+        httpsubreg = re.search('(ftp|http)://(.*)$', urllib.unquote_plus(subreg.group(1)))
         scheme = (httpsubreg.group(1))
         candidate = (httpsubreg.group(2))
-        candidatef = True
+        candidatef = True   
       except:
         pass
       finally:
@@ -57,11 +58,11 @@ for log in logs:
             # Got a Winner
           if (exclusion == 0):
             print candidate
-            winner.append( (api_key,candidate,line) )
+            winner.append( (line) )
         else:
           try:
             if (re.search('<\?php', subreg.group(1)) <> None):
-              winner.append( (api_key,candidate,line) )
+              winner.append( (line) )
               print subreg.group(1)
           except:
             pass
@@ -70,13 +71,17 @@ for log in logs:
   except:
     print('read error %s' % log)
 data=json.dumps(winner)
+print data
+data=data+'prute'
 url= posturl+'&crc='+hashlib.sha256(data+hashpass).hexdigest()
 headers = { 'User-Agent' : UserAgent  }
 #try:
+print url
 try: 
   req = urllib2.Request(url, data, headers)
   response = urllib2.urlopen(req)
   the_page = response.read()
+  print (the_page)  
   
 except urllib2.HTTPError as e:
   if (e.code==401):
