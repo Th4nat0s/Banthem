@@ -1,0 +1,6 @@
+# SQL configuration
+[sql]
+server: 'sqlserver.acme.org'
+dbase: 'banthem'
+pass: 'password'
+user: 'user'

@@ -71,10 +71,10 @@ for log in logs:
   except:
     print('read error %s' % log)
 data=json.dumps(winner)
+print data
 url= posturl+'&crc='+hashlib.sha256(data+hashpass).hexdigest()
 headers = { 'User-Agent' : UserAgent  }
-#try:
-print url
+#print url
 try: 
   req = urllib2.Request(url, data, headers)
   response = urllib2.urlopen(req)
@@ -91,7 +91,3 @@ except urllib2.HTTPError as e:
   else:
     print e.code
     print 'Unexpectd Error'
-
-
-
-
