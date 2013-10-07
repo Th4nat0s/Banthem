@@ -157,7 +157,7 @@ for log in logs:
       IP_ID=getid(cursor)
     else:
       dlog("Update IP")
-      cursor.execute('update T_IP set CLT=True, LASTSEEN=now() where IP_ID = %s', (IP_ID[0],))
+      cursor.execute('update T_IP set CLT=True, LASTSEEN=now() where IP_ID = %s', (IP_ID,))
 
     # Updated Client
     cursor.execute('update T_CLIENT set PUSH_TIME=now() where CLT_ID=%s' , (CLT_ID,))
