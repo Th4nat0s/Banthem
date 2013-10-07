@@ -71,9 +71,10 @@ for log in logs:
   except:
     print('read error %s' % log)
 data=json.dumps(winner)
-print data
+#print data
 url= posturl+'&crc='+hashlib.sha256(data+hashpass).hexdigest()
-headers = { 'User-Agent' : UserAgent  }
+headers = { 'User-Agent' : UserAgent, 'Content-Type': 'application/json'  }
+
 #print url
 try: 
   req = urllib2.Request(url, data, headers)

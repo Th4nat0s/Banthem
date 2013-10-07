@@ -20,25 +20,12 @@ logs = [ './sample/out.txt' ]
 
 # Open database connection
 db = MySQLdb.connect(config.get("sql", "server"),
-	config.get("sql", "dbase"),
 	config.get("sql", "user"),
-	config.get("sql", "pass"))
+	config.get("sql", "pass"),
+	config.get("sql", "dbase"))
 
 # prepare a cursor object using cursor() method
 cursor = db.cursor()
-
-# execute SQL query using execute() method.
-cursor.execute("SELECT VERSION()")
-
-# Fetch a single row using fetchone() method.
-data = cursor.fetchone()
-
-print "Database version : %s " % data
-
-# disconnect from server
-db.close()
-
-
 
 winner = []
 for log in logs:
@@ -48,15 +35,16 @@ for log in logs:
     CIP = f.readline().rstrip('\n');
     data = f.readline()
 
+
 	# Update la table Client si pas client ne fait rien
-    print ('select CLI_ID from T_CLIENT  where UID == \''+UID+'\'')	
-    CLI_ID = '1111' # fake
-    
+    cursor.execute('select CLT_ID from T_CLIENT where UID=\''+UID+'\'')	
+    CLT_ID =str(cursor.fetchone()[0])
+
 	# si pas UID ... stop, drop file, report, checker par php in
-    if (CLI_ID == 'Null'): 
+    if (CLT_ID == 'Null'): 
       break
-    print ('UPDATE PUSHTIME from T_CLIENT  where CLI_ID == \''+CLI_ID+'\'')	
-  
+    cursor.execute('UPDATE T_CLIENT set PUSH_TIME=now() where CLT_ID=\''+CLT_ID+'\'')	
+
   except:
     print 'error reading report'
   report = json.loads(data)
@@ -101,10 +89,15 @@ for log in logs:
 
     if (TYPE_ID<> 2):
       # Fill the malware Url Table
-      print ('select from T_MURL MURL_ID where MURL == \''+MURL+'\'')	
-	  # Si MURL_ID pas trouve
-      print ('insert into T_MURL (MURL) VALUES '+MURL)	
-      MURL_ID = 4444 
+      cursor.execute('select MURL_ID from T_MURL where MURL=\''+MURL+'\'')	
+      MURL_ID=str(cursor.fetchone())
+      if (MURL_ID == 'None'): 
+        print "insert murl"
+	    # Si MURL_ID pas trouve
+        cursor.execute("INSERT INTO T_MURL (MURL) values (%s)"	,( MURL,))
+        MURL_ID=str(cursor.fetchone())
+        print MURL_ID
+	
     else:
       # It's a direct injection
       # Md5 Sum the injection sauve et insert dans db si inexistant
@@ -127,3 +120,7 @@ for log in logs:
     print ('select CLI_ID T_IP IP_ID where IP == \''+CIP+'\'')	
     print ('XXXXXXXXXXXXXXXXXXXXXXXXX--------------')
 	# Update la table Client
+
+
+cursor.connection.commit();
+db.close()

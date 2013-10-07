@@ -17,6 +17,7 @@ function keyexist($lapi_key) {
 
 // ****************************************
 // Main Code
+$base = 'in/';
 $password = 'password';
 $crc = 'NULL';
 $api_key  = 'NULL';
@@ -34,20 +35,22 @@ if ($api_key == 'NULL' ) { // if api_key is bad, stop
 }
 
 // Get the content
-print ('DATA\n');
-//$body2 = http_get_request_body();
 $body = @file_get_contents('php://input');
-		print ('fid ormatok');
-print $body;
-print(file_get_contents('php://input'));
 
 // Validate the CRC
 if(isset($_GET["crc"])) {
 	$crc = $_GET["crc"]; 
+	
 } else {
 	invalid();
 }
 
 // Write the data to the Queue
-
+$name = $base.md5(rand(0,100000).microtime(true));
+$fp = fopen($name, 'w');
+fwrite($fp , $api_key.chr(0x0a));
+fwrite($fp , $_SERVER["REMOTE_ADDR"].chr(0x0a));
+fwrite($fp , $body);
+print ('Data Recorded');
+fclose($name);
 ?>
