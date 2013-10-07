@@ -8,7 +8,8 @@ import hashlib
 import urllib
 import MySQLdb
 import ConfigParser
-
+import glob
+import shutil
 
 def dlog(msg):
   print ('%s' % msg)
@@ -38,9 +39,12 @@ db = MySQLdb.connect(config.get("sql", "server"),
 # prepare a cursor object using cursor() method
 cursor = db.cursor()
 
-winner = []
+# load file list
+logs = glob.glob(config.get("queue","in")+'/*')
+
 for log in logs:
   try:
+    dlog('processing '+log)
     f = open(log,'r')
     UID = f.readline().rstrip('\n')
     CIP = f.readline().rstrip('\n');
@@ -99,15 +103,21 @@ for log in logs:
           FSHA = hashlib.sha256(M_FILE).hexdigest()
           FSSDEEP = ''
 
+          # Save file
+          fout = open(config.get("repo","folder")+'/'+FMD5,'w')
+          fout.write (M_FILE)
+          fout.close()
+
+
     if (TYPE_ID<> 3):
       # Fill the malware Url Table
       cursor.execute('select MURL_ID from T_MURL where MURL=%s' , (MURL,))	
       MURL_ID=getid(cursor)
       if (MURL_ID == 'None'): 
         dlog("insert murl")
-	    # Si MURL_ID pas trouve
+	      # Si MURL_ID pas trouve
         cursor.execute("INSERT INTO T_MURL (MURL) values (%s)"	,( MURL,))
-        MURL_ID=getid(cursor)
+        MURL_ID=cursor.lastrowid
     else:
       # It's a direct injection
       # Md5 Sum the injection sauve et insert dans db si inexistant
@@ -116,22 +126,23 @@ for log in logs:
       if (FILE_ID == 'None'):
         dlog("insert FILE ")
         cursor.execute('insert into T_FILE (FMD5, FSHA, FSSDEEP) VALUES (%s, %s, %s)',(FMD5, FSHA, FSSDEEP,))	
-        FILE_ID=getid(cursor)
+        FILE_ID=cursor.lastrowid
 	# Update la table injection
     cursor.execute('select INJ_ID from T_INJ where INJ_HIT = %s' , (INJ_HIT,))	
     INJ_ID=getid(cursor)
     if (INJ_ID == 'None'):
       dlog("insert Injection")
       cursor.execute('insert into T_INJ (INJ_HIT) VALUES (%s) ' , (INJ_HIT,))
-      INJ_ID=getid(cursor)
+      INJ_ID=cursor.lastrowid
 
-	# Update la table IP Attanquant
+
+   	# Update la table IP Attanquant
     cursor.execute('select IP_ID from T_IP where IP = %s ' , (IP, ))	
     IP_ID=getid(cursor)
     if (IP_ID == 'None'):
       dlog("insert new attaquant IP")
       cursor.execute('insert into T_IP (IP,ATT,LASTSEEN) VALUES (%s, True, now())' , (IP,))
-      IP_ID=getid(cursor)
+      IP_ID=cursor.lastrowid
     else:
       dlog("Update IP")
       dlog('update T_IP set LASTSEEN=now(),ATT=True where IP_ID = '+IP_ID)
@@ -158,5 +169,14 @@ for log in logs:
     else:
       cursor.execute('insert into T_HIT (CLT_ID,INJ_ID,TYPE_ID,FILE_ID,HIT_TIME) VALUES (%s, %s, %s,%s, now())' , (CLT_ID,INJ_ID,TYPE_ID,FILE_ID,))
 
-cursor.connection.commit();
+    # Commit database 
+    cursor.connection.commit();
+
+    # close file and move to outq
+    f.close()
+    try:
+      shutil.move(log,config.get("queue","out")+'/')
+    except:
+      pass
+
 db.close()

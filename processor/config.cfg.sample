@@ -1,6 +1,16 @@
 # SQL configuration
 [sql]
-server: 'sqlserver.acme.org'
-dbase: 'banthem'
-pass: 'password'
-user: 'user'
+server: sqlserver.acme.org
+dbase: banthem
+pass: password
+user: user
+
+# Define malware repo
+[repo]
+folder: ./repository
+
+# Define in and out folder
+[queue]
+in: ./in
+out: ./out
+
