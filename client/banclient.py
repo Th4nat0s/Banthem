@@ -11,7 +11,7 @@ import json
 import hashlib
 import urllib
 import os
-
+import datetime
 
 # Fill your API KEY
 api_key = 'ddf002e00f3176987fcdc47af55b1a2c3f8229dc3bbb83233bb4a4ad0acf06ff'
@@ -40,6 +40,7 @@ UserAgent = 'BanThem/0.0'
 # Log
 def dlog(chaine):
   Lock.acquire()
+  print datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"), 
   print chaine
   Lock.release()
 
@@ -52,7 +53,8 @@ def init():
 
 def sendreport(mbuffer):
   dlog('Reporting')
-  data=json.dumps(mbuffer)
+  data = [datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S"), mbuffer]
+  data=json.dumps(data)
   url= posturl+'&crc='+hashlib.sha256(data+hashpass).hexdigest()
   headers = { 'User-Agent' : UserAgent, 'Content-Type': 'application/json'  }
 
@@ -83,7 +85,7 @@ def mscan(mcandidate):
   # Scan for http://
   subreg=re.search(commonregex,mcandidate);
   try:
-    httpsubreg = re.search('(ftp|http)://(.*)$', urllib.unquote_plus(subreg.group(1)))
+    httpsubreg = re.search('(ftp|http)://(.*)$', urllib.unquote_plus(subreg.group(1)), re.IGNORECASE)
     scheme = (httpsubreg.group(1))
     candidate = (httpsubreg.group(2))
     candidatef = True
@@ -94,13 +96,13 @@ def mscan(mcandidate):
       candidate = scheme+'://'+candidate
       exclusion = 0
       for exclude in excludes:
-        if (re.search(exclude,candidate) <> None ):
+        if (re.search(exclude,candidate,) <> None ):
           exclusion = exclusion + 1
       if (exclusion == 0):
         win(mcandidate) 
     else:
       try:
-        if (re.search('<\?php', subreg.group(1)) <> None):
+        if (re.search('<\?php', subreg.group(1), re.IGNORECASE) <> None):
           win(mcandidate) 
       except:
         pass
@@ -132,7 +134,6 @@ def report(name):
       sendreport(winner)
       winner = []
       #Lock.release()
-    
     time.sleep(60)
 
 
