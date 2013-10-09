@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 import thread
 import threading
@@ -12,6 +13,8 @@ import hashlib
 import urllib
 import os
 import datetime
+import argparse  
+import sys
 
 # Fill your API KEY
 api_key = 'ddf002e00f3176987fcdc47af55b1a2c3f8229dc3bbb83233bb4a4ad0acf06ff'
@@ -34,7 +37,8 @@ logs = [ './sample/users.log',
 commonregex = '^.*"[\S]{1,} (.*) [\S\.\/]{1,}".*".*".*".*"$'
 dateregex = '^.*\[(.*)\]'
 posturl = 'http://banthem.trollprod.org/report/?id=' + api_key
-UserAgent = 'BanThem/0.0'
+version = '0.0'
+UserAgent = 'BanThem/'+version
 
 
 # Log
@@ -136,15 +140,58 @@ def report(name):
       #Lock.release()
     time.sleep(60)
 
+def dryrun():
+  dlog('Start Dryrun')
+  for log in logs:
+    dlog('Scan %s' %(log))
+    try:
+      f = open(log,'r')
+      for line in f.readlines():
+        mscan(line)
+      f.close()
+    except IOError as e:
+      dlog( "I/O error({0}): {1}".format(e.errno, e.strerror))
+    except:
+      dlog ("Unexpected error:", sys.exc_info()[0])
+      raise
 
-init()
-winner = []
-Lock = threading.Lock() # lock
-# Start Parse thread
-thread.start_new_thread( report , ('nil',))
-# Start Read Threads
-for log in logs:
-   thread.start_new_thread( monitor, (log, ) )
+  dlog('Reporting %d candidates' % (len( winner)))
+  for line in winner:
+    dlog(line.rstrip('\n'))
 
-while True:
-  time.sleep(15)
+def daemon():
+  dlog('Start Daemon')
+  init()
+  global winner
+  winner = []
+  # Start Parse thread
+  thread.start_new_thread( report , ('nil',))
+  # Start Read Threads
+  for log in logs:
+    thread.start_new_thread( monitor, (log, ) )
+  while True:
+    time.sleep(15)
+
+# Main programm
+if __name__ == '__main__':
+  global Lock
+  Lock = threading.Lock() # lock
+
+  global winner
+  winner=[]
+
+  parser = argparse.ArgumentParser( description='BanThem v'+version+' (c) Thanatos 2013', usage='Report PHP injection\n')
+  #parser.add_argument('-v', '--verbose', action='store_true', help='verbose mode', dest='verbose')
+  group = parser.add_mutually_exclusive_group(required=True)
+  group.add_argument('-daemon', action='store_true', dest='daemon')
+  group.add_argument('-dryrun', action='store_true', dest='dryrun')
+
+  # Start Right Function
+  args = parser.parse_args()
+  argsdict = vars(args)
+  if (argsdict['daemon']==True):
+    daemon()
+  if (argsdict['dryrun']==True):
+    dryrun()
+
+  
