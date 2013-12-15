@@ -63,7 +63,7 @@ for log in logs:
 
   except:
     dlog ( 'error reading report')
-  report = json.loads(data)
+  report = json.loads(data[1])
   for line in report:
     #print line
 	# Scan for http://
